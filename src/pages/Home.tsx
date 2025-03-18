@@ -2,25 +2,26 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import '../styles/AuthLayout.css'; // Podemos reaproveitar layout
+import  imgright from '../../src/assets/logo.png' 
 
 const Home: React.FC = () => {
   return (
     <div className="auth-container">
       <div className="auth-left">
         <div className="contact-links">
-          <Link to="/contact">Contato</Link>
-          <Link to="/login">Entrar</Link>
+          
         </div>
-        <div className="logo">FeedBox</div>
-        <h1>Bem-vindo ao FeedBox!</h1>
+        <div className="logo"><img src={imgright} alt="" /></div>
+        <h1 className='h1se'>Bem-vindo ao FeedBox!</h1>
         <p>Aqui você poderá avaliar produtos e ver relatórios no painel admin.</p>
         <div style={{ marginTop: '20px' }}>
-          <Link to="/login" style={{ marginRight: '20px' }}>
-            <button style={{ padding: '10px 20px', cursor: 'pointer' }}>Entrar</button>
-          </Link>
-          <Link to="/register">
-            <button style={{ padding: '10px 20px', cursor: 'pointer' }}>Cadastrar</button>
-          </Link>
+        <Link to="/login" style={{ marginRight: '20px' }}>
+  <button className="button-custom">Entrar</button>
+</Link>
+
+<Link to="/register">
+  <button className="button-custom">Cadastrar</button>
+</Link>
         </div>
       </div>
       <div className="auth-right">

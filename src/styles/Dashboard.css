@@ -29,6 +29,30 @@
   padding: 3vh 2vw;
 }
 
+.h1se{
+  margin-bottom: 1vh;
+}
+
+.button-custom {
+  margin-top: 5vh;
+  padding: 10px 20px;
+  cursor: pointer;
+  background-color: #f4d03b;
+  color: white;
+  border: 2px solid ;
+  border-radius: 5px;
+  font-size: 16px;
+  font-weight: bold;
+  transition: all 0.3s ease-in-out;
+}
+
+.button-custom:hover {
+  background-color: white;
+  color: #f4d03b;
+  border: 2px solid #f4d03b;
+}
+
+
 .dashboard-main {
   flex: 1;
   padding: 20px;
