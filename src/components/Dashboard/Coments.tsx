@@ -1,12 +1,34 @@
-// src/components/Dashboard/Comments.tsx
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useEvaluations } from '../../hooks/useEvaluations';
+import { fetchUserEmail } from '../../services/userService';
 
 const Comments: React.FC = () => {
   const { dailyData, addComment } = useEvaluations();
   const { currentUser } = useAuth();
   const [text, setText] = useState('');
+  const [userEmails, setUserEmails] = useState<{ [key: string]: string }>({});
+
+  // Função para carregar os e-mails dos usuários
+  useEffect(() => {
+    const loadEmails = async () => {
+      if (!dailyData?.comments) return;
+
+      const emailsMap: { [key: string]: string } = { ...userEmails };
+
+      // Buscar e-mails para cada comentário
+      for (const comment of dailyData.comments) {
+        if (!emailsMap[comment.userId]) {
+          const email = await fetchUserEmail(comment.userId);
+          emailsMap[comment.userId] = email;
+        }
+      }
+
+      setUserEmails(emailsMap);
+    };
+
+    loadEmails();
+  }, [dailyData]);
 
   if (!dailyData) return null;
 
@@ -25,10 +47,10 @@ const Comments: React.FC = () => {
         {dailyData.comments?.map((comment, idx) => (
           <li key={idx} style={{ marginBottom: '10px' }}>
             <p>
-              <strong>{comment.userId}:</strong> {comment.text}
+              {/* Aqui exibe o e-mail em vez do userId */}
+              <strong>{userEmails[comment.userId] || 'Carregando...'}:</strong> {comment.text}
             </p>
             <small>{new Date(comment.createdAt).toLocaleString()}</small>
-            {/* Aqui poderia exibir replies se quiser */}
           </li>
         ))}
       </ul>

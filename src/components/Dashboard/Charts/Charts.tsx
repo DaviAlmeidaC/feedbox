@@ -30,10 +30,11 @@ const Charts: React.FC = () => {
     loadWeekly();
   }, []);
 
+  // ✅ Correção: Agora somamos os valores corretamente para o gráfico de pizza
   const buildPieChartData = (evals: any[]) => {
-    const good = evals.filter((e) => e.goodCount).length;
-    const regular = evals.filter((e) => e.regularCount).length;
-    const bad = evals.filter((e) => e.badCount).length;
+    const good = evals.reduce((sum, e) => sum + (e.goodCount || 0), 0);
+    const regular = evals.reduce((sum, e) => sum + (e.regularCount || 0), 0);
+    const bad = evals.reduce((sum, e) => sum + (e.badCount || 0), 0);
 
     return {
       labels: ['Bom', 'Razoável', 'Ruim'],

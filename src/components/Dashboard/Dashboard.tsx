@@ -22,7 +22,7 @@ const Dashboard: React.FC = () => {
             <h2> Avaliações</h2>
           </div>
           <div>
-            <span style={{ marginRight: '20px' }}>{currentUser?.email}</span>
+            <span className="user-email" style={{ marginRight: '20px' }}>{currentUser?.email}</span>
             <button
               onClick={logout}
               className="btn-logout"

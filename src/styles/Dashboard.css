@@ -211,3 +211,9 @@
   justify-content: center;
   flex-direction: column;
 }
+
+@media (max-width: 768px) {
+  .user-email {
+    display: none;
+  }
+}
