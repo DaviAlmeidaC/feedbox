@@ -11,23 +11,24 @@ const Charts: React.FC = () => {
   const [dailyData, setDailyData] = useState<any>(null);  // Dados diários
   const [weeklyData, setWeeklyData] = useState<any>(null); // Dados semanais
 
+  // Função para carregar os dados diários e semanais
+  const loadDailyData = async () => {
+    const start = moment().startOf('day').format('YYYY-MM-DD');
+    const end = moment().endOf('day').format('YYYY-MM-DD');
+    const data = await fetchEvaluationsByRange(start, end);
+    setDailyData(buildPieChartData(data)); // Dados para o gráfico de Pizza
+  };
+
+  const loadWeeklyData = async () => {
+    const start = moment().startOf('week').format('YYYY-MM-DD');
+    const end = moment().endOf('week').format('YYYY-MM-DD');
+    const data = await fetchEvaluationsByRange(start, end);
+    setWeeklyData(buildBarChartData(data)); // Dados para o gráfico de Colunas
+  };
+
   useEffect(() => {
-    const loadDaily = async () => {
-      const start = moment().startOf('day').format('YYYY-MM-DD');
-      const end = moment().endOf('day').format('YYYY-MM-DD');
-      const data = await fetchEvaluationsByRange(start, end);
-      setDailyData(buildPieChartData(data)); // Dados para o gráfico de Pizza
-    };
-
-    const loadWeekly = async () => {
-      const start = moment().startOf('week').format('YYYY-MM-DD');
-      const end = moment().endOf('week').format('YYYY-MM-DD');
-      const data = await fetchEvaluationsByRange(start, end);
-      setWeeklyData(buildBarChartData(data)); // Dados para o gráfico de Colunas
-    };
-
-    loadDaily();
-    loadWeekly();
+    loadDailyData();
+    loadWeeklyData();
   }, []);
 
   // ✅ Correção: Agora somamos os valores corretamente para o gráfico de pizza
@@ -37,7 +38,7 @@ const Charts: React.FC = () => {
     const bad = evals.reduce((sum, e) => sum + (e.badCount || 0), 0);
 
     return {
-      labels: ['Bom', 'Razoável', 'Ruim'],
+      labels: ['Bom', 'Regular', 'Ruim'], // Troca "Razoável" por "Regular"
       datasets: [
         {
           data: [good, regular, bad],
@@ -48,13 +49,13 @@ const Charts: React.FC = () => {
   };
 
   const buildBarChartData = (evals: any[]) => {
-    const weekLabels = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+    const weekLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']; // Começa no Domingo
     const good = new Array(7).fill(0);
     const regular = new Array(7).fill(0);
     const bad = new Array(7).fill(0);
 
     evals.forEach((e) => {
-      const dayOfWeek = moment(e.date).day();
+      const dayOfWeek = moment(e.date).day(); // Garantir que o domingo seja o início da semana
       good[dayOfWeek] += e.goodCount;
       regular[dayOfWeek] += e.regularCount;
       bad[dayOfWeek] += e.badCount;
@@ -69,7 +70,7 @@ const Charts: React.FC = () => {
           backgroundColor: '#36A2EB',
         },
         {
-          label: 'Razoável',
+          label: 'Regular', // Troca "Razoável" por "Regular"
           data: regular,
           backgroundColor: '#FFCE56',
         },

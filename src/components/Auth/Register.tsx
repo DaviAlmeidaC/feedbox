@@ -27,7 +27,7 @@ const Register: React.FC = () => {
       <div className="auth-left">
         <div className="contact-links">
           
-          <Link to="/login">Entrar</Link>
+          <Link className='negrito' to="/login">Entrar</Link>
         </div>
         <div className="logo"><img src={imgright} alt="" /></div>
         <h2 className="auth-title">Cadastrar</h2>

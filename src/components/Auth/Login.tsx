@@ -27,7 +27,7 @@ const Login: React.FC = () => {
       <div className="auth-left">
         <div className="contact-links">
         
-         <Link to="/register">Registrar</Link>
+         <Link className='negrito' to="/register">Registrar</Link>
         </div>
         <div className="logo"><img src={imgright} alt="" /></div>
         <h2 className="auth-title">Entrar</h2>

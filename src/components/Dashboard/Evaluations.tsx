@@ -12,7 +12,7 @@ const Evaluations: React.FC = () => {
       <h3>Avaliações do Dia: {dailyData.date}</h3>
       <p>
         <strong>Bom:</strong> {dailyData.goodCount} |{' '}
-        <strong>Razoável:</strong> {dailyData.regularCount} |{' '}
+        <strong>Regular:</strong> {dailyData.regularCount} |{' '}
         <strong>Ruim:</strong> {dailyData.badCount}
       </p>
       <div style={{ marginTop: '10px' }}>
