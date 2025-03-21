@@ -1,3 +1,4 @@
+// src/components/ChartsMensalAnual.tsx
 import React, { useEffect, useState } from 'react';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Tooltip } from 'chart.js';
@@ -11,35 +12,23 @@ const ChartsMensalAnual: React.FC = () => {
   const [monthlyData, setMonthlyData] = useState<any>(null);
   const [annualData, setAnnualData] = useState<any>(null);
 
-  // Função para carregar os dados mensais e anuais
-  const loadMonthlyData = async () => {
-    const start = moment().startOf('month').format('YYYY-MM-DD');
-    const end = moment().endOf('month').format('YYYY-MM-DD');
-    const data = await fetchEvaluationsByRange(start, end);
-    setMonthlyData(buildChartData(data, 'Mês atual'));
-  };
-
-  const loadAnnualData = async () => {
-    const start = moment().startOf('year').format('YYYY-MM-DD');
-    const end = moment().endOf('year').format('YYYY-MM-DD');
-    const data = await fetchEvaluationsByRange(start, end);
-    setAnnualData(buildChartData(data, 'Ano atual'));
-  };
-
   useEffect(() => {
-    loadMonthlyData();
-    loadAnnualData();
+    const loadChartData = async () => {
+      const startMonth = moment().startOf('month').format('YYYY-MM-DD');
+      const endMonth = moment().endOf('month').format('YYYY-MM-DD');
+      const monthData = await fetchEvaluationsByRange(startMonth, endMonth);
+      setMonthlyData(buildChartData(monthData, 'Mês atual'));
+
+      const startYear = moment().startOf('year').format('YYYY-MM-DD');
+      const endYear = moment().endOf('year').format('YYYY-MM-DD');
+      const yearData = await fetchEvaluationsByRange(startYear, endYear);
+      setAnnualData(buildChartData(yearData, 'Ano atual'));
+    };
+    loadChartData();
   }, []);
 
   const buildChartData = (evals: any[], label: string) => {
-    const labels = evals.map((e) => {
-      // Formatar apenas para exibir o mês no gráfico mensal
-      if (label === 'Mês atual') {
-        return moment(e.date).format('MMMM'); // Exibe o mês, como "Março"
-      }
-      // Caso contrário, exibe o ano para o gráfico anual
-      return moment(e.date).format('YYYY'); // Exibe o ano, como "2025"
-    });
+    const labels = evals.map((e) => (label === 'Mês atual' ? moment(e.date).format('DD') : moment(e.date).format('MM/YYYY')));
     const good = evals.map((e) => e.goodCount);
     const regular = evals.map((e) => e.regularCount);
     const bad = evals.map((e) => e.badCount);
@@ -58,52 +47,11 @@ const ChartsMensalAnual: React.FC = () => {
     <div className="charts-container">
       <div className="chart-box">
         <h3>Registro Mensal</h3>
-        {monthlyData ? (
-          <Line
-            data={monthlyData}
-            options={{
-              responsive: true,
-              plugins: {
-                tooltip: {
-                  callbacks: {
-                    label: (tooltipItem) => {
-                      const label = tooltipItem.dataset.label || '';
-                      const value = tooltipItem.raw;
-                      return `${label}: ${value}`;
-                    },
-                  },
-                },
-              },
-            }}
-          />
-        ) : (
-          <p>Carregando dados mensais...</p>
-        )}
+        {monthlyData ? <Line data={monthlyData} options={{ responsive: true }} /> : <p>Carregando dados mensais...</p>}
       </div>
-
       <div className="chart-box">
         <h3>Registro Anual</h3>
-        {annualData ? (
-          <Line
-            data={annualData}
-            options={{
-              responsive: true,
-              plugins: {
-                tooltip: {
-                  callbacks: {
-                    label: (tooltipItem) => {
-                      const label = tooltipItem.dataset.label || '';
-                      const value = tooltipItem.raw;
-                      return `${label}: ${value}`;
-                    },
-                  },
-                },
-              },
-            }}
-          />
-        ) : (
-          <p>Carregando dados anuais...</p>
-        )}
+        {annualData ? <Line data={annualData} options={{ responsive: true }} /> : <p>Carregando dados anuais...</p>}
       </div>
     </div>
   );

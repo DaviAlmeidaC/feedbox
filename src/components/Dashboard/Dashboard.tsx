@@ -36,8 +36,8 @@ const Dashboard: React.FC = () => {
       <main className="dashboard-main">
         
 
-        {/* Avaliações */}
-        <Evaluations />
+        {/* Avaliações
+        <Evaluations /> */}
 
         {/* Gráficos */}
         <div className="charts-container">

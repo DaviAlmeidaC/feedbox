@@ -1,46 +1,44 @@
 import React, { useEffect, useState } from 'react';
 import { Pie, Bar } from 'react-chartjs-2';
-import { Chart as ChartJS, ArcElement, BarElement, Tooltip } from 'chart.js';
+import { Chart as ChartJS, ArcElement, BarElement, Tooltip, CategoryScale, LinearScale } from 'chart.js';
 import { useEvaluations } from '../../../hooks/useEvaluations';
 import moment from 'moment';
 
-ChartJS.register(ArcElement, BarElement, Tooltip);
+ChartJS.register(ArcElement, BarElement, Tooltip, CategoryScale, LinearScale);
 
 const Charts: React.FC = () => {
   const { fetchEvaluationsByRange } = useEvaluations();
-  const [dailyData, setDailyData] = useState<any>(null);  // Dados diários
-  const [weeklyData, setWeeklyData] = useState<any>(null); // Dados semanais
-
-  // Função para carregar os dados diários e semanais
-  const loadDailyData = async () => {
-    const start = moment().startOf('day').format('YYYY-MM-DD');
-    const end = moment().endOf('day').format('YYYY-MM-DD');
-    const data = await fetchEvaluationsByRange(start, end);
-    setDailyData(buildPieChartData(data)); // Dados para o gráfico de Pizza
-  };
-
-  const loadWeeklyData = async () => {
-    const start = moment().startOf('week').format('YYYY-MM-DD');
-    const end = moment().endOf('week').format('YYYY-MM-DD');
-    const data = await fetchEvaluationsByRange(start, end);
-    setWeeklyData(buildBarChartData(data)); // Dados para o gráfico de Colunas
-  };
+  const [dailyData, setDailyData] = useState<any>(null);
+  const [weeklyData, setWeeklyData] = useState<any>(null);
 
   useEffect(() => {
-    loadDailyData();
-    loadWeeklyData();
+    const loadChartData = async () => {
+      const startDay = moment().startOf('day').format('YYYY-MM-DD');
+      const endDay = moment().endOf('day').format('YYYY-MM-DD');
+      const dayData = await fetchEvaluationsByRange(startDay, endDay);
+      setDailyData(buildPieChartData(dayData));
+
+      const startWeek = moment().startOf('week').format('YYYY-MM-DD');
+      const endWeek = moment().endOf('week').format('YYYY-MM-DD');
+      const weekData = await fetchEvaluationsByRange(startWeek, endWeek);
+      setWeeklyData(buildBarChartData(weekData));
+    };
+
+    loadChartData();
   }, []);
 
-  // ✅ Correção: Agora somamos os valores corretamente para o gráfico de pizza
   const buildPieChartData = (evals: any[]) => {
+    if (!evals || evals.length === 0) return null;
+
     const good = evals.reduce((sum, e) => sum + (e.goodCount || 0), 0);
     const regular = evals.reduce((sum, e) => sum + (e.regularCount || 0), 0);
     const bad = evals.reduce((sum, e) => sum + (e.badCount || 0), 0);
 
     return {
-      labels: ['Bom', 'Regular', 'Ruim'], // Troca "Razoável" por "Regular"
+      labels: ['Boa', 'Razoável', 'Ruim'],
       datasets: [
         {
+          label: 'Avaliações Diárias',
           data: [good, regular, bad],
           backgroundColor: ['#36A2EB', '#FFCE56', '#FF6384'],
         },
@@ -49,20 +47,15 @@ const Charts: React.FC = () => {
   };
 
   const buildBarChartData = (evals: any[]) => {
-    const weekLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']; // Começa no Domingo
-    const good = new Array(7).fill(0);
-    const regular = new Array(7).fill(0);
-    const bad = new Array(7).fill(0);
+    if (!evals || evals.length === 0) return null;
 
-    evals.forEach((e) => {
-      const dayOfWeek = moment(e.date).day(); // Garantir que o domingo seja o início da semana
-      good[dayOfWeek] += e.goodCount;
-      regular[dayOfWeek] += e.regularCount;
-      bad[dayOfWeek] += e.badCount;
-    });
+    const labels = evals.map((e) => moment(e.date).format('ddd'));
+    const good = evals.map((e) => e.goodCount || 0);
+    const regular = evals.map((e) => e.regularCount || 0);
+    const bad = evals.map((e) => e.badCount || 0);
 
     return {
-      labels: weekLabels,
+      labels,
       datasets: [
         {
           label: 'Bom',
@@ -70,7 +63,7 @@ const Charts: React.FC = () => {
           backgroundColor: '#36A2EB',
         },
         {
-          label: 'Regular', // Troca "Razoável" por "Regular"
+          label: 'Regular',
           data: regular,
           backgroundColor: '#FFCE56',
         },
@@ -83,56 +76,32 @@ const Charts: React.FC = () => {
     };
   };
 
+  const pieChartOptions = {
+    responsive: true,
+    plugins: {
+      tooltip: {
+        callbacks: {
+          label: (tooltipItem: any) => {
+            const labelIndex = tooltipItem.dataIndex;
+            const labels = ['Boa', 'Razoável', 'Ruim'];
+            const values = tooltipItem.dataset.data;
+            return `${labels[labelIndex]}: ${values[labelIndex]}`;
+          },
+        },
+      },
+    },
+  };
+
   return (
     <div className="charts-container">
       <div className="chart-box">
         <h3>Avaliações Diárias</h3>
-        {dailyData ? (
-          <Pie
-            data={dailyData}
-            options={{
-              responsive: true,
-              plugins: {
-                tooltip: {
-                  callbacks: {
-                    label: (tooltipItem) => {
-                      const label = tooltipItem.dataset.label || '';
-                      const value = tooltipItem.raw;
-                      return `${label}: ${value}`;
-                    },
-                  },
-                },
-              },
-            }}
-          />
-        ) : (
-          <p>Carregando dados diários...</p>
-        )}
+        {dailyData ? <Pie data={dailyData} options={pieChartOptions} /> : <p>Carregando dados diários...</p>}
       </div>
 
       <div className="chart-box">
         <h3>Avaliações Semanais</h3>
-        {weeklyData ? (
-          <Bar
-            data={weeklyData}
-            options={{
-              responsive: true,
-              plugins: {
-                tooltip: {
-                  callbacks: {
-                    label: (tooltipItem) => {
-                      const label = tooltipItem.dataset.label || '';
-                      const value = tooltipItem.raw;
-                      return `${label}: ${value}`;
-                    },
-                  },
-                },
-              },
-            }}
-          />
-        ) : (
-          <p>Carregando dados semanais...</p>
-        )}
+        {weeklyData ? <Bar data={weeklyData} options={{ responsive: true }} /> : <p>Carregando dados semanais...</p>}
       </div>
     </div>
   );
