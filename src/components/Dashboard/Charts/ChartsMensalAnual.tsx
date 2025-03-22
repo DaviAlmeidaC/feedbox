@@ -1,4 +1,3 @@
-// src/components/ChartsMensalAnual.tsx
 import React, { useEffect, useState } from 'react';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Tooltip } from 'chart.js';
@@ -14,31 +13,48 @@ const ChartsMensalAnual: React.FC = () => {
 
   useEffect(() => {
     const loadChartData = async () => {
-      const startMonth = moment().startOf('month').format('YYYY-MM-DD');
+      // Dados Mensais (Últimos 12 meses)
+      const startMonth = moment().subtract(11, 'months').startOf('month').format('YYYY-MM-DD');
       const endMonth = moment().endOf('month').format('YYYY-MM-DD');
       const monthData = await fetchEvaluationsByRange(startMonth, endMonth);
-      setMonthlyData(buildChartData(monthData, 'Mês atual'));
+      setMonthlyData(buildChartData(monthData, 'mensal'));
 
-      const startYear = moment().startOf('year').format('YYYY-MM-DD');
+      // Dados Anuais (Últimos 5 anos)
+      const startYear = moment().subtract(4, 'years').startOf('year').format('YYYY-MM-DD');
       const endYear = moment().endOf('year').format('YYYY-MM-DD');
       const yearData = await fetchEvaluationsByRange(startYear, endYear);
-      setAnnualData(buildChartData(yearData, 'Ano atual'));
+      setAnnualData(buildChartData(yearData, 'anual'));
     };
+
     loadChartData();
   }, []);
 
-  const buildChartData = (evals: any[], label: string) => {
-    const labels = evals.map((e) => (label === 'Mês atual' ? moment(e.date).format('DD') : moment(e.date).format('MM/YYYY')));
-    const good = evals.map((e) => e.goodCount);
-    const regular = evals.map((e) => e.regularCount);
-    const bad = evals.map((e) => e.badCount);
+  const buildChartData = (evals: any[], type: 'mensal' | 'anual') => {
+    const groupedData: Record<string, { good: number; regular: number; bad: number }> = {};
+
+    evals.forEach((e) => {
+      const key = type === 'mensal' ? moment(e.date).format('MMMM') : moment(e.date).format('YYYY');
+
+      if (!groupedData[key]) {
+        groupedData[key] = { good: 0, regular: 0, bad: 0 };
+      }
+
+      groupedData[key].good += e.goodCount || 0;
+      groupedData[key].regular += e.regularCount || 0;
+      groupedData[key].bad += e.badCount || 0;
+    });
+
+    const labels = Object.keys(groupedData);
+    const good = labels.map((key) => groupedData[key].good);
+    const regular = labels.map((key) => groupedData[key].regular);
+    const bad = labels.map((key) => groupedData[key].bad);
 
     return {
       labels,
       datasets: [
-        { label: `Bom - ${label}`, data: good, borderColor: 'green', fill: false },
-        { label: `Regular - ${label}`, data: regular, borderColor: 'orange', fill: false },
-        { label: `Ruim - ${label}`, data: bad, borderColor: 'red', fill: false },
+        { label: 'Bom', data: good, borderColor: 'green', fill: false },
+        { label: 'Regular', data: regular, borderColor: 'orange', fill: false },
+        { label: 'Ruim', data: bad, borderColor: 'red', fill: false },
       ],
     };
   };
