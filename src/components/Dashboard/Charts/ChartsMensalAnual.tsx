@@ -8,32 +8,43 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip)
 
 const ChartsMensalAnual: React.FC = () => {
   const { fetchEvaluationsByRange } = useEvaluations();
+  const [dailyData, setDailyData] = useState<any>(null);
   const [monthlyData, setMonthlyData] = useState<any>(null);
-  const [annualData, setAnnualData] = useState<any>(null);
+  const [yearlyData, setYearlyData] = useState<any>(null);
 
   useEffect(() => {
     const loadChartData = async () => {
+      // Dados Diários (Últimos 15 dias)
+      const startDaily = moment().subtract(14, 'days').format('YYYY-MM-DD');
+      const endDaily = moment().format('YYYY-MM-DD');
+      const dailyEvaluations = await fetchEvaluationsByRange(startDaily, endDaily);
+      setDailyData(buildChartData(dailyEvaluations, 'diario'));
+
       // Dados Mensais (Últimos 12 meses)
-      const startMonth = moment().subtract(11, 'months').startOf('month').format('YYYY-MM-DD');
-      const endMonth = moment().endOf('month').format('YYYY-MM-DD');
-      const monthData = await fetchEvaluationsByRange(startMonth, endMonth);
-      setMonthlyData(buildChartData(monthData, 'mensal'));
+      const startMonthly = moment().subtract(11, 'months').startOf('month').format('YYYY-MM-DD');
+      const endMonthly = moment().endOf('month').format('YYYY-MM-DD');
+      const monthlyEvaluations = await fetchEvaluationsByRange(startMonthly, endMonthly);
+      setMonthlyData(buildChartData(monthlyEvaluations, 'mensal'));
 
       // Dados Anuais (Últimos 5 anos)
-      const startYear = moment().subtract(4, 'years').startOf('year').format('YYYY-MM-DD');
-      const endYear = moment().endOf('year').format('YYYY-MM-DD');
-      const yearData = await fetchEvaluationsByRange(startYear, endYear);
-      setAnnualData(buildChartData(yearData, 'anual'));
+      const startYearly = moment().subtract(4, 'years').startOf('year').format('YYYY-MM-DD');
+      const endYearly = moment().endOf('year').format('YYYY-MM-DD');
+      const yearlyEvaluations = await fetchEvaluationsByRange(startYearly, endYearly);
+      setYearlyData(buildChartData(yearlyEvaluations, 'anual'));
     };
 
     loadChartData();
   }, []);
 
-  const buildChartData = (evals: any[], type: 'mensal' | 'anual') => {
+  const buildChartData = (evaluations: any[], type: 'diario' | 'mensal' | 'anual') => {
     const groupedData: Record<string, { good: number; regular: number; bad: number }> = {};
 
-    evals.forEach((e) => {
-      const key = type === 'mensal' ? moment(e.date).format('MMMM') : moment(e.date).format('YYYY');
+    evaluations.forEach((e) => {
+      const key = type === 'diario'
+        ? moment(e.date).format('DD/MM')
+        : type === 'mensal'
+        ? moment(e.date).format('MMMM') // Apenas o nome do mês
+        : moment(e.date).format('YYYY'); // Apenas o ano
 
       if (!groupedData[key]) {
         groupedData[key] = { good: 0, regular: 0, bad: 0 };
@@ -61,13 +72,14 @@ const ChartsMensalAnual: React.FC = () => {
 
   return (
     <div className="charts-container">
+      
       <div className="chart-box">
         <h3>Registro Mensal</h3>
         {monthlyData ? <Line data={monthlyData} options={{ responsive: true }} /> : <p>Carregando dados mensais...</p>}
       </div>
       <div className="chart-box">
         <h3>Registro Anual</h3>
-        {annualData ? <Line data={annualData} options={{ responsive: true }} /> : <p>Carregando dados anuais...</p>}
+        {yearlyData ? <Line data={yearlyData} options={{ responsive: true }} /> : <p>Carregando dados anuais...</p>}
       </div>
     </div>
   );

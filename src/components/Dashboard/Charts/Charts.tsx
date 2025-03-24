@@ -13,22 +13,34 @@ const Charts: React.FC = () => {
 
   useEffect(() => {
     const loadChartData = async () => {
-      const startDay = moment().startOf('day').format('YYYY-MM-DD');
-      const endDay = moment().endOf('day').format('YYYY-MM-DD');
-      const dayData = await fetchEvaluationsByRange(startDay, endDay);
-      setDailyData(buildPieChartData(dayData));
+      try {
+        // Carregar dados diários
+        const today = moment().format('YYYY-MM-DD');
+        console.log(`Buscando avaliações para ${today}...`);
+        const dayData = await fetchEvaluationsByRange(today, today);
+        console.log('Dados diários recebidos:', dayData);
+        setDailyData(buildPieChartData(dayData));
 
-      const startWeek = moment().startOf('week').format('YYYY-MM-DD');
-      const endWeek = moment().endOf('week').format('YYYY-MM-DD');
-      const weekData = await fetchEvaluationsByRange(startWeek, endWeek);
-      setWeeklyData(buildBarChartData(weekData));
+        // Carregar dados semanais (últimos 7 dias)
+        const startWeek = moment().subtract(6, 'days').format('YYYY-MM-DD');
+        const endWeek = moment().format('YYYY-MM-DD');
+        console.log(`Buscando avaliações semanais de ${startWeek} a ${endWeek}...`);
+        const weekData = await fetchEvaluationsByRange(startWeek, endWeek);
+        console.log('Dados semanais recebidos:', weekData);
+        setWeeklyData(buildBarChartData(weekData));
+      } catch (error) {
+        console.error('Erro ao carregar os dados:', error);
+      }
     };
 
     loadChartData();
   }, []);
 
   const buildPieChartData = (evals: any[]) => {
-    if (!evals || evals.length === 0) return null;
+    if (!evals || evals.length === 0) {
+      console.warn('Nenhum dado diário encontrado.');
+      return null;
+    }
 
     const good = evals.reduce((sum, e) => sum + (e.goodCount || 0), 0);
     const regular = evals.reduce((sum, e) => sum + (e.regularCount || 0), 0);
@@ -47,12 +59,28 @@ const Charts: React.FC = () => {
   };
 
   const buildBarChartData = (evals: any[]) => {
-    if (!evals || evals.length === 0) return null;
+    if (!evals || evals.length === 0) {
+      console.warn('Nenhum dado semanal encontrado.');
+      return null;
+    }
 
-    const labels = evals.map((e) => moment(e.date).format('ddd'));
-    const good = evals.map((e) => e.goodCount || 0);
-    const regular = evals.map((e) => e.regularCount || 0);
-    const bad = evals.map((e) => e.badCount || 0);
+    // Agrupar os dados corretamente por dia da semana
+    const groupedData: Record<string, { good: number; regular: number; bad: number }> = {};
+
+    evals.forEach((e) => {
+      const day = moment(e.date).format('ddd'); // Ex: "Seg", "Ter"
+      if (!groupedData[day]) {
+        groupedData[day] = { good: 0, regular: 0, bad: 0 };
+      }
+      groupedData[day].good += e.goodCount || 0;
+      groupedData[day].regular += e.regularCount || 0;
+      groupedData[day].bad += e.badCount || 0;
+    });
+
+    const labels = Object.keys(groupedData);
+    const good = labels.map((key) => groupedData[key].good);
+    const regular = labels.map((key) => groupedData[key].regular);
+    const bad = labels.map((key) => groupedData[key].bad);
 
     return {
       labels,
@@ -76,27 +104,11 @@ const Charts: React.FC = () => {
     };
   };
 
-  const pieChartOptions = {
-    responsive: true,
-    plugins: {
-      tooltip: {
-        callbacks: {
-          label: (tooltipItem: any) => {
-            const labelIndex = tooltipItem.dataIndex;
-            const labels = ['Boa', 'Razoável', 'Ruim'];
-            const values = tooltipItem.dataset.data;
-            return `${labels[labelIndex]}: ${values[labelIndex]}`;
-          },
-        },
-      },
-    },
-  };
-
   return (
     <div className="charts-container">
       <div className="chart-box">
         <h3>Avaliações Diárias</h3>
-        {dailyData ? <Pie data={dailyData} options={pieChartOptions} /> : <p>Carregando dados diários...</p>}
+        {dailyData ? <Pie data={dailyData} options={{ responsive: true }} /> : <p>Carregando dados diários...</p>}
       </div>
 
       <div className="chart-box">
